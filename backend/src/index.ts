@@ -7,7 +7,7 @@ import placesRoutes from './routes/placesRoutes';
 dotenv.config();
 
 const app: Application = express();
-const PORT = process.env.PORT || 3000;
+const PORT = parseInt(process.env.PORT || '3000', 10);
 
 // Middleware
 app.use(cors());
@@ -66,11 +66,11 @@ app.use((err: Error, req: Request, res: Response, next: any) => {
 });
 
 // Запуск сервера
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log('=================================');
   console.log(`🚀 Tour Builder API`);
   console.log(`🌍 Server running on port ${PORT}`);
-  console.log(`📍 http://localhost:${PORT}`);
+  console.log(`📍 http://0.0.0.0:${PORT}`);
   console.log('=================================');
 });
 
