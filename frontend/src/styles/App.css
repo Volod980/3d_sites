@@ -148,6 +148,29 @@ body {
   margin-bottom: 0.5rem;
 }
 
+.place-rating {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.place-rating .stars {
+  color: #ffa000;
+  letter-spacing: 1px;
+}
+
+.place-rating .rating-value {
+  font-weight: 600;
+  color: #333;
+}
+
+.place-rating .reviews-count {
+  color: #666;
+  font-size: 0.85rem;
+}
+
 .place-address {
   font-size: 0.9rem;
   color: #666;

@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import googleMapsService from '../services/googleMapsService';
 import osmService from '../services/osmService';
 import routeService from '../services/routeService';
 import { Place, SearchParams, RouteRequest } from '../types';
@@ -95,7 +96,17 @@ export class PlacesController {
             const mockPlaces = getMockPlacesForCity('Київ');
             return mockPlaces.find(p => p.id === id) || null;
           }
-          // Інакше шукаємо в OSM
+
+          // Спробуємо Google Maps якщо доступний
+          if (googleMapsService.isAvailable()) {
+            try {
+              return await googleMapsService.getPlaceDetails(id);
+            } catch (error) {
+              console.log('Google Maps не повернув деталі, пробуємо OSM');
+            }
+          }
+
+          // Fallback на OSM
           return await osmService.getPlaceDetails(id);
         })
       );
@@ -129,36 +140,70 @@ export class PlacesController {
 
   /**
    * Пошук популярних місць у конкретному місті
-   * GET /api/places/city/:cityName
+   * GET /api/places/city/:cityName?limit=50&minRating=4.0&minReviews=10
    */
   async getPlacesByCity(req: Request, res: Response): Promise<void> {
     try {
       const { cityName } = req.params;
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
+      const minRating = req.query.minRating ? parseFloat(req.query.minRating as string) : undefined;
+      const minReviews = req.query.minReviews ? parseInt(req.query.minReviews as string) : undefined;
 
       let places: Place[] = [];
+      let dataSource = 'unknown';
 
-      // Спочатку пробуємо отримати mock дані
-      places = getMockPlacesForCity(cityName);
+      // Пріоритет 1: Google Maps (найкращий варіант з рейтингами)
+      if (googleMapsService.isAvailable()) {
+        try {
+          console.log(`🔍 Шукаємо місця через Google Maps: ${cityName}`);
+          places = await googleMapsService.searchPlaces({
+            city: cityName,
+            limit,
+            minRating,
+            minReviews
+          });
+          dataSource = 'Google Maps';
+          console.log(`✅ Google Maps: знайдено ${places.length} місць`);
+        } catch (googleError: any) {
+          console.error('Google Maps помилка:', googleError.message);
+          // Продовжуємо до fallback
+        }
+      }
 
-      // Якщо mock даних немає - пробуємо OSM (але це може не працювати)
+      // Пріоритет 2: Mock дані (тільки для Києва, для демонстрації)
+      if (places.length === 0) {
+        places = getMockPlacesForCity(cityName);
+        if (places.length > 0) {
+          dataSource = 'Mock дані (демо)';
+          console.log(`⚠️  Використано mock дані для ${cityName}`);
+        }
+      }
+
+      // Пріоритет 3: OpenStreetMap (може не працювати через proxy)
       if (places.length === 0) {
         try {
+          console.log(`🔍 Шукаємо через OpenStreetMap: ${cityName}`);
           places = await osmService.searchPlaces({
             city: cityName,
             limit
           });
+          dataSource = 'OpenStreetMap';
         } catch (osmError) {
-          console.log('OSM не доступний, використовуємо mock дані для Києва');
-          // Якщо OSM не працює - показуємо Київ як приклад
-          places = getMockPlacesForCity('Київ');
+          console.log('OSM не доступний');
         }
+      }
+
+      // Якщо нічого не знайшли - показуємо Київ як приклад
+      if (places.length === 0) {
+        console.log('Нічого не знайдено, показуємо Київ як приклад');
+        places = getMockPlacesForCity('Київ');
+        dataSource = 'Mock дані (Київ як приклад)';
       }
 
       if (places.length === 0) {
         res.status(404).json({
           success: false,
-          error: `Не знайдено туристичних місць у місті "${cityName}". Спробуйте "Київ".`
+          error: `Не знайдено туристичних місць у місті "${cityName}". Додайте Google Maps API ключ для повного функціоналу.`
         });
         return;
       }
@@ -168,7 +213,11 @@ export class PlacesController {
         city: cityName,
         count: places.length,
         data: places,
-        note: places[0]?.id?.startsWith('mock') ? 'Демонстраційні дані' : undefined
+        dataSource,
+        filters: {
+          minRating: minRating || 'none',
+          minReviews: minReviews || 'none'
+        }
       });
     } catch (error) {
       console.error('Error fetching places by city:', error);

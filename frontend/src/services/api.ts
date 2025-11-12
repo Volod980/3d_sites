@@ -43,8 +43,23 @@ export const tourApi = {
   /**
    * Отримання місць у конкретному місті
    */
-  async getPlacesByCity(cityName: string, limit: number = 50): Promise<Place[]> {
-    const response = await api.get<ApiResponse<Place[]>>(`/places/city/${cityName}?limit=${limit}`);
+  async getPlacesByCity(
+    cityName: string,
+    options?: {
+      limit?: number;
+      minRating?: number;
+      minReviews?: number;
+    }
+  ): Promise<Place[]> {
+    const params = new URLSearchParams();
+    if (options?.limit) params.append('limit', options.limit.toString());
+    if (options?.minRating) params.append('minRating', options.minRating.toString());
+    if (options?.minReviews) params.append('minReviews', options.minReviews.toString());
+
+    const queryString = params.toString();
+    const url = `/places/city/${cityName}${queryString ? `?${queryString}` : ''}`;
+
+    const response = await api.get<ApiResponse<Place[]>>(url);
     return response.data.data || [];
   },
 

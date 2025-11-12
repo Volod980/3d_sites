@@ -44,6 +44,28 @@ const Sidebar: React.FC<SidebarProps> = ({
     }
   };
 
+  const renderRating = (rating?: number, reviewsCount?: number): JSX.Element | null => {
+    if (!rating) return null;
+
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 >= 0.5;
+    const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+
+    return (
+      <div className="place-rating">
+        <span className="stars">
+          {'⭐'.repeat(fullStars)}
+          {hasHalfStar && '⭐'}
+          {'☆'.repeat(emptyStars)}
+        </span>
+        <span className="rating-value">{rating.toFixed(1)}</span>
+        {reviewsCount && (
+          <span className="reviews-count">({reviewsCount})</span>
+        )}
+      </div>
+    );
+  };
+
   const handleAIRecommendations = (recommendedNames: string[]) => {
     // Знаходимо місця з рекомендацій AI та автоматично їх вибираємо
     recommendedNames.forEach(name => {
@@ -118,6 +140,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 >
                   <h3>{place.name}</h3>
                   <span className="place-category">{place.category}</span>
+                  {renderRating(place.rating, place.userRatingsTotal)}
                   {place.address && (
                     <p className="place-address">📍 {place.address}</p>
                   )}
