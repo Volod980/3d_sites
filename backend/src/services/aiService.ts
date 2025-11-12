@@ -8,13 +8,21 @@ import { Place } from '../types';
 export class AIService {
   private genAI: GoogleGenerativeAI | null = null;
   private model: any = null;
+  private initialized: boolean = false;
 
-  constructor() {
+  /**
+   * Ініціалізація AI сервісу (lazy initialization)
+   */
+  private initialize(): void {
+    if (this.initialized) return;
+
+    this.initialized = true;
     const apiKey = process.env.GEMINI_API_KEY;
 
     if (apiKey) {
       this.genAI = new GoogleGenerativeAI(apiKey);
       this.model = this.genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
+      console.log('✅ AI сервіс ініціалізовано успішно');
     } else {
       console.warn('⚠️  GEMINI_API_KEY не знайдено. AI функції недоступні.');
     }
@@ -24,6 +32,7 @@ export class AIService {
    * Перевірка чи AI доступний
    */
   isAvailable(): boolean {
+    this.initialize();
     return this.model !== null;
   }
 

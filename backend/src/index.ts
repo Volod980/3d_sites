@@ -1,11 +1,13 @@
 import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import path from 'path';
 import placesRoutes from './routes/placesRoutes';
 import aiRoutes from './routes/aiRoutes';
 
 // Завантажуємо змінні оточення
-dotenv.config();
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
+console.log('🔑 GEMINI_API_KEY present:', !!process.env.GEMINI_API_KEY);
 
 const app: Application = express();
 const PORT = parseInt(process.env.PORT || '3000', 10);

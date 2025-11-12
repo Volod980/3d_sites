@@ -88,8 +88,17 @@ export class PlacesController {
       }
 
       // Отримуємо деталі всіх місць
-      const placePromises = placeIds.map(id => osmService.getPlaceDetails(id));
-      const placesResults = await Promise.all(placePromises);
+      const placesResults: (Place | null)[] = await Promise.all(
+        placeIds.map(async (id) => {
+          // Якщо це mock дані - шукаємо в mock
+          if (id.startsWith('mock-')) {
+            const mockPlaces = getMockPlacesForCity('Київ');
+            return mockPlaces.find(p => p.id === id) || null;
+          }
+          // Інакше шукаємо в OSM
+          return await osmService.getPlaceDetails(id);
+        })
+      );
 
       // Фільтруємо null значення
       const places = placesResults.filter(place => place !== null) as Place[];
