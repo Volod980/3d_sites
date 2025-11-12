@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Place, Route } from '../types';
+import { AIAssistant } from './AIAssistant';
 
 interface SidebarProps {
   places: Place[];
@@ -7,6 +8,7 @@ interface SidebarProps {
   route: Route | null;
   loading: boolean;
   error: string | null;
+  currentCity: string;
   onSearch: (city: string) => void;
   onPlaceSelect: (place: Place) => void;
   onPlaceRemove: (placeId: string) => void;
@@ -19,6 +21,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   route,
   loading,
   error,
+  currentCity,
   onSearch,
   onPlaceSelect,
   onPlaceRemove,
@@ -39,6 +42,19 @@ const Sidebar: React.FC<SidebarProps> = ({
     } else {
       return `${(meters / 1000).toFixed(1)} км`;
     }
+  };
+
+  const handleAIRecommendations = (recommendedNames: string[]) => {
+    // Знаходимо місця з рекомендацій AI та автоматично їх вибираємо
+    recommendedNames.forEach(name => {
+      const place = places.find(p =>
+        p.name.toLowerCase().includes(name.toLowerCase()) ||
+        name.toLowerCase().includes(p.name.toLowerCase())
+      );
+      if (place && !selectedPlaces.some(sp => sp.id === place.id)) {
+        onPlaceSelect(place);
+      }
+    });
   };
 
   return (
@@ -63,6 +79,15 @@ const Sidebar: React.FC<SidebarProps> = ({
           </button>
         </form>
       </div>
+
+      {/* AI Асистент */}
+      {currentCity && places.length > 0 && (
+        <AIAssistant
+          city={currentCity}
+          availablePlaces={places}
+          onPlacesRecommended={handleAIRecommendations}
+        />
+      )}
 
       {/* Помилка */}
       {error && <div className="error">{error}</div>}

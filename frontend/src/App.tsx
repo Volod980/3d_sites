@@ -11,6 +11,7 @@ function App() {
   const [route, setRoute] = useState<Route | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [currentCity, setCurrentCity] = useState<string>('');
 
   // Пошук місць по місту
   const handleSearch = async (city: string) => {
@@ -19,6 +20,7 @@ function App() {
     setPlaces([]);
     setSelectedPlaces([]);
     setRoute(null);
+    setCurrentCity(city);
 
     try {
       const results = await tourApi.getPlacesByCity(city, 100);
@@ -109,6 +111,7 @@ function App() {
           route={route}
           loading={loading}
           error={error}
+          currentCity={currentCity}
           onSearch={handleSearch}
           onPlaceSelect={handlePlaceSelect}
           onPlaceRemove={handlePlaceRemove}

@@ -79,6 +79,70 @@ export const tourApi = {
       return null;
     }
   },
+
+  /**
+   * Перевірка доступності AI сервісу
+   */
+  async checkAIStatus(): Promise<{ available: boolean; message?: string }> {
+    try {
+      const response = await api.get('/ai/status');
+      return response.data.data || { available: false };
+    } catch (error) {
+      console.error('Error checking AI status:', error);
+      return { available: false, message: 'Помилка перевірки AI сервісу' };
+    }
+  },
+
+  /**
+   * Отримання рекомендацій від AI
+   */
+  async getAIRecommendations(request: string, city: string): Promise<{
+    recommendations: string[];
+    explanation: string;
+  } | null> {
+    try {
+      const response = await api.post('/ai/recommendations', {
+        request,
+        city,
+      });
+      return response.data.data || null;
+    } catch (error) {
+      console.error('Error getting AI recommendations:', error);
+      return null;
+    }
+  },
+
+  /**
+   * Чат з AI асистентом
+   */
+  async chatWithAI(message: string, context?: string): Promise<string | null> {
+    try {
+      const response = await api.post('/ai/chat', {
+        message,
+        context,
+      });
+      return response.data.data?.response || null;
+    } catch (error) {
+      console.error('Error chatting with AI:', error);
+      return null;
+    }
+  },
+
+  /**
+   * Отримання опису маршруту від AI
+   */
+  async getRouteDescription(places: Place[], totalDistance: number): Promise<string | null> {
+    try {
+      const response = await api.post('/ai/route-description', {
+        places,
+        totalDistance,
+      });
+      return response.data.data?.description || null;
+    } catch (error) {
+      console.error('Error getting route description:', error);
+      return null;
+    }
+  },
 };
 
 export default tourApi;

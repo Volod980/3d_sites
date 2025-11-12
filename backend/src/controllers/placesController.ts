@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import osmService from '../services/osmService';
 import routeService from '../services/routeService';
 import { Place, SearchParams, RouteRequest } from '../types';
+import { getMockPlacesForCity } from '../data/mockPlaces';
 
 /**
  * Контролер для роботи з туристичними місцями
@@ -126,16 +127,39 @@ export class PlacesController {
       const { cityName } = req.params;
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
 
-      const places = await osmService.searchPlaces({
-        city: cityName,
-        limit
-      });
+      let places: Place[] = [];
+
+      // Спочатку пробуємо отримати mock дані
+      places = getMockPlacesForCity(cityName);
+
+      // Якщо mock даних немає - пробуємо OSM (але це може не працювати)
+      if (places.length === 0) {
+        try {
+          places = await osmService.searchPlaces({
+            city: cityName,
+            limit
+          });
+        } catch (osmError) {
+          console.log('OSM не доступний, використовуємо mock дані для Києва');
+          // Якщо OSM не працює - показуємо Київ як приклад
+          places = getMockPlacesForCity('Київ');
+        }
+      }
+
+      if (places.length === 0) {
+        res.status(404).json({
+          success: false,
+          error: `Не знайдено туристичних місць у місті "${cityName}". Спробуйте "Київ".`
+        });
+        return;
+      }
 
       res.json({
         success: true,
         city: cityName,
         count: places.length,
-        data: places
+        data: places,
+        note: places[0]?.id?.startsWith('mock') ? 'Демонстраційні дані' : undefined
       });
     } catch (error) {
       console.error('Error fetching places by city:', error);

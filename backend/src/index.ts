@@ -2,6 +2,7 @@ import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import placesRoutes from './routes/placesRoutes';
+import aiRoutes from './routes/aiRoutes';
 
 // Завантажуємо змінні оточення
 dotenv.config();
@@ -22,6 +23,7 @@ app.use((req, res, next) => {
 
 // Routes
 app.use('/api/places', placesRoutes);
+app.use('/api/ai', aiRoutes);
 
 // Health check endpoint
 app.get('/health', (req: Request, res: Response) => {
